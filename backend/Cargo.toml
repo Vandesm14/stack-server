@@ -1,0 +1,14 @@
+[package]
+name = "stack-server"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rocket = "0.5.1"
+rocket_cors = "0.6.0"
+smol = "2.0.0"
+stack-core = { path = "../../stack/stack-core" }
+stack-std = { path = "../../stack/stack-std" }
+tokio = { version = "1.37.0", features = ["rt-multi-thread"] }
