@@ -144,40 +144,36 @@
     setInterval(draw, 1000 / 30);
 
     const keydown = (e: KeyboardEvent) => {
+      let closest_line = 0;
+      for (let i in indicies) {
+        if (indicies[i].index <= cursor) {
+          closest_line = parseInt(i);
+        } else break;
+      }
+
+      let current_line = indicies[closest_line];
+      let offset = cursor - current_line?.index ?? 0;
+
       if (e.key === 'ArrowLeft') {
         cursor -= 1;
       } else if (e.key === 'ArrowRight') {
         cursor += 1;
       } else if (e.key === 'ArrowUp') {
-        let closest_line = 0;
-        for (let i in indicies) {
-          if (indicies[i].index - 1 < cursor) {
-            closest_line = parseInt(i);
-          } else break;
-        }
-
-        let current_line = indicies[closest_line];
-        let offset = cursor - current_line?.index ?? 0;
-
         let new_line = indicies[closest_line - 1];
         cursor = new_line?.index ?? 0;
         cursor = Number.isNaN(cursor) ? 0 : cursor;
         cursor += Math.min(offset, new_line?.length ?? 0);
       } else if (e.key === 'ArrowDown') {
-        let closest_line = 0;
-        for (let i in indicies) {
-          if (indicies[i].index - 1 < cursor) {
-            closest_line = parseInt(i);
-          } else break;
-        }
-
-        let current_line = indicies[closest_line];
-        let offset = cursor - current_line?.index ?? 0;
-
         let new_line = indicies[closest_line + 1];
         cursor = new_line?.index ?? code.length;
         cursor = Number.isNaN(cursor) ? code.length : cursor;
         cursor += Math.min(offset, new_line?.length ?? 0);
+      } else if (e.key === 'Home') {
+        cursor = current_line.index;
+      } else if (e.key === 'End') {
+        let new_line = indicies[closest_line + 1];
+        cursor = new_line?.index - 1 ?? code.length;
+        cursor = Number.isNaN(cursor) ? code.length : cursor;
       } else if (e.key === 'Backspace') {
         e.preventDefault();
         let splice = code.split('');
@@ -222,8 +218,6 @@
 {:else}
   <pre>stack: {result.stack.join(', ')}</pre>
 {/if}
-
-<p>{cursor}</p>
 
 <div id="device">
   <canvas id="buffer" bind:this={canvas} width="231px" height="143px"></canvas>
