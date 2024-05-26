@@ -59,6 +59,10 @@ fn execute(code: &str) -> status::Custom<content::RawText<String>> {
     let mut engine = Engine::new();
     let context = Context::new();
 
+    engine.add_module(stack_std::str::module());
+    engine.add_module(stack_std::fs::module(false));
+    engine.add_module(stack_std::scope::module());
+
     match engine.run_with_timeout(context, exprs, Duration::from_secs(5)) {
       Ok(context) => status::Custom(
         Status::Accepted,
