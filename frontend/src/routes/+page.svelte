@@ -5,7 +5,6 @@
 
   type Mode = 'edit' | 'run';
   let mode: Mode = 'edit';
-  let buffer = '';
   let cursor = 0;
   let canvas: HTMLCanvasElement | null = null;
 
@@ -46,8 +45,6 @@
     // let show_cursor = time % 2 === 0;
     // if (show_cursor) {
     //   overlay_buffer = ' '.repeat(cursor) + '█';
-    // } else {
-    //   overlay_buffer = '';
     // }
 
     if (!canvas) return;
@@ -76,10 +73,8 @@
   }
 
   onMount(() => {
-    setInterval(draw, 1000 / 20);
+    setInterval(draw, 1000 / 10);
   });
-
-  const keydown: KeyboardEventHandler<HTMLInputElement> = (e) => {};
 
   const keypress: KeyboardEventHandler<HTMLInputElement> = (e) => {
     e.preventDefault();
@@ -90,8 +85,15 @@
       return;
     }
 
-    cursor += 1;
-    code += e.key;
+    if (e.key === 'Enter') {
+      cursor += 1;
+      code += '\n';
+    }
+
+    if (e.key.length === 1) {
+      cursor += 1;
+      code += e.key;
+    }
   };
 
   const keyup: KeyboardEventHandler<HTMLInputElement> = (e) => {
@@ -116,7 +118,7 @@
 
 <div id="device">
   <canvas id="buffer" bind:this={canvas} width="231px" height="143px"></canvas>
-  <input type="text" on:keydown={keyup} on:keypress={keypress} autofocus />
+  <input type="text" on:keydown={keyup} on:keypress={keypress} />
   <button on:click={change_mode}>Mode</button>
 </div>
 
@@ -125,15 +127,5 @@
     display: flex;
     flex-direction: column;
     width: min-content;
-
-    & > * {
-      width: fit-content;
-    }
-
-    #buffer {
-      // width: 16ch * 1.2;
-      // height: 7ch * 2.25;
-      background: black;
-    }
   }
 </style>
