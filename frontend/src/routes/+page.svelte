@@ -43,12 +43,6 @@
   }
 
   function draw() {
-    // let time = Math.round(Date.now() / 500);
-    // let show_cursor = time % 2 === 0;
-    // if (show_cursor) {
-    //   overlay_buffer = ' '.repeat(cursor) + '█';
-    // }
-
     if (!canvas) return;
 
     const height = canvas.height;
@@ -64,8 +58,6 @@
 
     c.fillStyle = 'white';
     c.font = '24px monospace';
-
-    let max = 16 * 7;
 
     let formatted_code = code
       .split('\n')
@@ -92,58 +84,102 @@
 
     let buffer_window = lines.slice(0, max_lines);
 
+    function generateLinesLookup(
+      formatted_code: string,
+      max_chars: number
+    ): Array<[number, number]> {
+      let lines_lookup: Array<[number, number]> = [];
+      let x = 1; // Start from 1 to account for the ':' character
+      let y = 0;
+
+      for (let i = 0; i < formatted_code.length; i++) {
+        if (formatted_code[i] === '\n') {
+          // When a newline is encountered, increment y and reset x
+          y += 1;
+          x = 1; // Reset to 1 to account for the ':' character in the next line
+        } else {
+          lines_lookup.push([x, y]);
+          x += 1;
+          if (x > max_chars) {
+            // If x exceeds max_chars, increment y and reset x
+            y += 1;
+            x = 1; // Reset to 1 to account for the ':' character in the next line
+          }
+        }
+      }
+      return lines_lookup;
+    }
+    let lines_lookup: Array<[number, number]> = generateLinesLookup(formatted_code, max_chars);
+
+    console.log(lines_lookup);
+
     debugger;
 
     for (let y = 0; y < max_lines; y++) {
       for (let x = 0; x < max_chars; x++) {
+        if (lines_lookup.findIndex(([lx, ly]) => lx === x && ly === y) === cursor) {
+          c.fillStyle = 'white';
+          c.fillRect(x * 14.4, y * 20 + 2, 14.4, 22);
+          c.fillStyle = 'black';
+        }
+
         if (buffer_window[y][x]) {
           c.fillText(buffer_window[y][x], x * 14.4, (y + 1) * 20);
         }
+
+        c.fillStyle = 'white';
       }
     }
-
-    // let missing = max - code.length;
-    // let padded = code + ' '.repeat(missing);
-    // let chunks = _.chunk(padded.split(''), 16);
-    // for (let i = 0; i < 7; i++) {
-    //   c.fillText(chunks[i].join(''), 0, (i + 1) * 20);
-    // }
   }
 
   onMount(() => {
-    setInterval(draw, 1000 / 10);
+    setInterval(draw, 1000 / 30);
+
+    const keydown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        cursor -= 1;
+      } else if (e.key === 'ArrowRight') {
+        cursor += 1;
+      }
+
+      cursor = Math.max(0, Math.min(cursor, code.length));
+    };
+
+    const keypress = (e: KeyboardEvent) => {
+      e.preventDefault();
+
+      if (e.key === 'Enter' && e.ctrlKey) {
+        e.preventDefault();
+        execute();
+        return;
+      }
+
+      if (e.key === 'Enter') {
+        cursor += 1;
+        code += '\n';
+      }
+
+      if (e.key.length === 1) {
+        code = code.slice(0, cursor) + e.key + code.slice(cursor);
+        cursor += 1;
+      }
+    };
+
+    const keyup = (e: KeyboardEvent) => {
+      if (e.key === 'Backspace') {
+        e.preventDefault();
+        let splice = code.split('');
+        splice.splice(cursor - 1, 1);
+
+        code = splice.join('');
+        cursor -= 1;
+      }
+    };
+
+    document.addEventListener('keydown', keydown);
+    document.addEventListener('keypress', keypress);
+    document.addEventListener('keyup', keyup);
   });
-
-  const keypress: KeyboardEventHandler<HTMLInputElement> = (e) => {
-    e.preventDefault();
-
-    if (e.key === 'Enter' && e.ctrlKey) {
-      e.preventDefault();
-      execute();
-      return;
-    }
-
-    if (e.key === 'Enter') {
-      cursor += 1;
-      code += '\n';
-    }
-
-    if (e.key.length === 1) {
-      cursor += 1;
-      code += e.key;
-    }
-  };
-
-  const keyup: KeyboardEventHandler<HTMLInputElement> = (e) => {
-    if (e.key === 'Backspace') {
-      e.preventDefault();
-      let splice = code.split('');
-      splice.splice(cursor - 1, 1);
-
-      code = splice.join('');
-      cursor -= 1;
-    }
-  };
 </script>
 
 {#if waiting}
@@ -156,7 +192,6 @@
 
 <div id="device">
   <canvas id="buffer" bind:this={canvas} width="231px" height="143px"></canvas>
-  <input type="text" on:keydown={keyup} on:keypress={keypress} />
   <button on:click={change_mode}>Mode</button>
 </div>
 
