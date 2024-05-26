@@ -3,18 +3,50 @@ extern crate rocket;
 use std::time::Duration;
 
 use rocket::{
-  fs::FileServer,
   http::Status,
   response::{content, status},
   Config,
 };
+use serde::ser::SerializeStruct;
+use serde::Serialize;
 use std::error::Error;
 
 use rocket::http::Method;
 use rocket::routes;
-use rocket_cors::{AllowedHeaders, AllowedOrigins, CorsOptions};
+use rocket_cors::{AllowedOrigins, CorsOptions};
 
 use stack_core::prelude::*;
+
+#[derive(Debug, Clone, PartialEq, Default)]
+struct ExecutionResult {
+  stack: Vec<Expr>,
+  error: Option<RunError>,
+}
+
+impl Serialize for ExecutionResult {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: rocket::serde::Serializer,
+  {
+    let mut response = serializer.serialize_struct("response", 2)?;
+
+    let stack: Vec<String> = self
+      .stack
+      .iter()
+      .map(|expr| expr.to_string())
+      .collect::<Vec<_>>();
+
+    let error: String = match &self.error {
+      Some(err) => err.to_string(),
+      None => "".to_owned(),
+    };
+
+    response.serialize_field("stack", &stack)?;
+    response.serialize_field("error", &error)?;
+
+    response.end()
+  }
+}
 
 #[post("/execute", data = "<code>")]
 fn execute(code: &str) -> status::Custom<content::RawText<String>> {
@@ -31,25 +63,23 @@ fn execute(code: &str) -> status::Custom<content::RawText<String>> {
       Ok(context) => status::Custom(
         Status::Accepted,
         content::RawText(
-          context
-            .stack()
-            .iter()
-            .enumerate()
-            .map(|(i, expr)| {
-              let mut string = String::new();
-              if i != 0 {
-                string.push_str(", ");
-              }
-              string.push_str(&expr.to_string());
-
-              string
-            })
-            .collect::<String>(),
+          serde_json::to_string(&ExecutionResult {
+            stack: context.stack().to_vec(),
+            error: None,
+          })
+          .unwrap_or_default(),
         ),
       ),
-      Err(err) => {
-        status::Custom(Status::BadRequest, content::RawText(err.to_string()))
-      }
+      Err(err) => status::Custom(
+        Status::BadRequest,
+        content::RawText(
+          serde_json::to_string(&ExecutionResult {
+            stack: Vec::new(),
+            error: Some(err),
+          })
+          .unwrap_or_default(),
+        ),
+      ),
     }
   })
   .join();

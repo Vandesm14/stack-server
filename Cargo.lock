@@ -1431,6 +1431,8 @@ version = "0.1.0"
 dependencies = [
  "rocket",
  "rocket_cors",
+ "serde",
+ "serde_json",
  "smol",
  "stack-core",
  "stack-std",
