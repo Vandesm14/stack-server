@@ -5,19 +5,22 @@
   type Mode = 'edit' | 'run';
   let mode: Mode = 'edit';
   let cursor = 0;
+  let line_offset = 0;
   let canvas: HTMLCanvasElement | null = null;
 
-  let code = `'(fn\n  2 2 +\n  'a def\n)\n\ncall`;
+  let code = `'(fn!\n  2 2 +\n  'a def\n  a\n)\n\ncall`;
   $: indicies = newLineIndicies(code);
-  // let code = `1234567890123456`;
-  // let code = `1\n2\n3\n4\n5\n6\n7`;
 
-  function newLineIndicies(code: string): Array<{ index: number; length: number }> {
+  function newLineIndicies(code: string): Array<{ index: number; end: number; length: number }> {
     let lines = code.split('\n');
-    let indicies: Array<{ index: number; length: number }> = [];
+    let indicies: Array<{ index: number; end: number; length: number }> = [];
     let currentIndex = 0;
     for (let i = 0; i < lines.length; i++) {
-      indicies.push({ index: currentIndex, length: lines[i].length });
+      indicies.push({
+        index: currentIndex,
+        end: currentIndex + lines[i].length,
+        length: lines[i].length
+      });
       currentIndex += lines[i].length + 1; // +1 for the newline character
     }
     return indicies;
@@ -53,7 +56,10 @@
     }
   }
 
-  function draw() {
+  const max_lines = 7;
+  const max_chars = 16;
+
+  $: (() => {
     if (!canvas) return;
 
     const height = canvas.height;
@@ -74,12 +80,11 @@
       .split('\n')
       .map((s) => `:${s}`)
       .join('\n');
-    let buffer = `PROGRAM\n${formatted_code}`;
     let lines = [];
     let line = '';
-    for (let si in buffer.split('')) {
+    for (let si in formatted_code.split('')) {
       let i = parseInt(si);
-      let char = buffer[i];
+      let char = formatted_code[i];
       if ((line.length % 16 === 0 && line.length > 0) || char === '\n') {
         lines.push(line);
         line = '';
@@ -91,54 +96,43 @@
     }
     lines.push(line);
 
-    const max_lines = 7;
-    const max_chars = 16;
+    lines = lines.slice(line_offset, max_lines + line_offset);
+    lines = ['PROGRAM', ...lines];
 
-    let buffer_window = lines.slice(0, max_lines);
-    function generateLinesLookup(buffer: string, max_chars: number): Array<[number, number]> {
-      let lines_lookup: Array<[number, number]> = [];
-      let x = 1; // Start from 1 to account for the ':' character
-      let y = 1;
-
-      for (let i = 0; i < buffer.length; i++) {
-        if (buffer[i] === '\n') {
-          // When a newline is encountered, increment y and reset x
-          y += 1;
-          x = 1; // Reset to 1 to account for the ':' character in the next line
-        } else {
-          lines_lookup.push([x, y]);
-          x += 1;
-          if (x > max_chars) {
-            // If x exceeds max_chars, increment y and reset x
-            y += 1;
-            x = 1; // Reset to 1 to account for the ':' character in the next line
-          }
+    let cursor_pos: [number, number] = [0, 0];
+    let counter = 0;
+    for (let line in lines.slice(1)) {
+      for (let char in lines[parseInt(line) + 1].split('')) {
+        if (counter === cursor) {
+          cursor_pos = [parseInt(char), parseInt(line)];
         }
-      }
-      return lines_lookup;
-    }
-    let lines_lookup: Array<[number, number]> = generateLinesLookup(formatted_code, max_chars);
 
+        counter += 1;
+      }
+    }
+    cursor_pos = [cursor_pos[0] + 1, cursor_pos[1] + 1];
+
+    let chars = 0;
     for (let y = 0; y < max_lines; y++) {
       for (let x = 0; x < max_chars; x++) {
-        if (lines_lookup.findIndex(([lx, ly]) => lx === x && ly === y) === cursor) {
+        let char = lines[y]?.[x];
+        if (cursor_pos[0] === x && cursor_pos[1] === y) {
           c.fillStyle = 'white';
           c.fillRect(x * 14.4, y * 20 + 2, 14.4, 22);
           c.fillStyle = 'black';
         }
 
-        if (buffer_window[y]?.[x]) {
-          c.fillText(buffer_window[y][x], x * 14.4, (y + 1) * 20);
+        if (char) {
+          c.fillText(lines[y][x], x * 14.4, (y + 1) * 20);
+          chars += 1;
         }
 
         c.fillStyle = 'white';
       }
     }
-  }
+  })();
 
   onMount(() => {
-    setInterval(draw, 1000 / 30);
-
     const keydown = (e: KeyboardEvent) => {
       let closest_line = 0;
       for (let i in indicies) {
@@ -164,6 +158,10 @@
         cursor = new_line?.index ?? code.length;
         cursor = Number.isNaN(cursor) ? code.length : cursor;
         cursor += Math.min(offset, new_line?.length ?? 0);
+
+        if (closest_line + 1 > line_offset + max_lines - 2) {
+          line_offset += 1;
+        }
       } else if (e.key === 'Home') {
         cursor = current_line.index;
       } else if (e.key === 'End') {
