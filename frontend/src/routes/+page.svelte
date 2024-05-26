@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import type { KeyboardEventHandler } from 'svelte/elements';
   import _ from 'underscore';
 
   type Mode = 'edit' | 'run';
@@ -75,11 +74,12 @@
       .split('\n')
       .map((s) => `:${s}`)
       .join('\n');
+    let buffer = `PROGRAM\n${formatted_code}`;
     let lines = [];
     let line = '';
-    for (let si in formatted_code.split('')) {
+    for (let si in buffer.split('')) {
       let i = parseInt(si);
-      let char = formatted_code[i];
+      let char = buffer[i];
       if ((line.length % 16 === 0 && line.length > 0) || char === '\n') {
         lines.push(line);
         line = '';
@@ -95,17 +95,13 @@
     const max_chars = 16;
 
     let buffer_window = lines.slice(0, max_lines);
-
-    function generateLinesLookup(
-      formatted_code: string,
-      max_chars: number
-    ): Array<[number, number]> {
+    function generateLinesLookup(buffer: string, max_chars: number): Array<[number, number]> {
       let lines_lookup: Array<[number, number]> = [];
       let x = 1; // Start from 1 to account for the ':' character
-      let y = 0;
+      let y = 1;
 
-      for (let i = 0; i < formatted_code.length; i++) {
-        if (formatted_code[i] === '\n') {
+      for (let i = 0; i < buffer.length; i++) {
+        if (buffer[i] === '\n') {
           // When a newline is encountered, increment y and reset x
           y += 1;
           x = 1; // Reset to 1 to account for the ':' character in the next line
@@ -196,8 +192,8 @@
       }
 
       if (e.key === 'Enter') {
+        code = code.slice(0, cursor) + '\n' + code.slice(cursor);
         cursor += 1;
-        code += '\n';
       }
 
       if (e.key.length === 1) {
