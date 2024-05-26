@@ -13,12 +13,13 @@
   // let code = `1234567890123456`;
   // let code = `1\n2\n3\n4\n5\n6\n7`;
 
-  function newLineIndicies(code: string): Array<number> {
-    let indicies: Array<number> = [0];
-    for (let i = 0; i < code.length; i++) {
-      if (code[i] === '\n') {
-        indicies.push(i);
-      }
+  function newLineIndicies(code: string): Array<{ index: number; length: number }> {
+    let lines = code.split('\n');
+    let indicies: Array<{ index: number; length: number }> = [];
+    let currentIndex = 0;
+    for (let i = 0; i < lines.length; i++) {
+      indicies.push({ index: currentIndex, length: lines[i].length });
+      currentIndex += lines[i].length + 1; // +1 for the newline character
     }
     return indicies;
   }
@@ -150,21 +151,33 @@
       } else if (e.key === 'ArrowUp') {
         let closest_line = 0;
         for (let i in indicies) {
-          if (indicies[i] < cursor) {
+          if (indicies[i].index - 1 < cursor) {
             closest_line = parseInt(i);
           } else break;
         }
-        cursor = indicies[closest_line - 1] + 1 ?? 0;
+
+        let current_line = indicies[closest_line];
+        let offset = cursor - current_line?.index ?? 0;
+
+        let new_line = indicies[closest_line - 1];
+        cursor = new_line?.index ?? 0;
         cursor = Number.isNaN(cursor) ? 0 : cursor;
+        cursor += Math.min(offset, new_line?.length ?? 0);
       } else if (e.key === 'ArrowDown') {
         let closest_line = 0;
         for (let i in indicies) {
-          if (indicies[i] < cursor) {
+          if (indicies[i].index - 1 < cursor) {
             closest_line = parseInt(i);
           } else break;
         }
-        cursor = indicies[closest_line + 1] + 1 ?? 0;
+
+        let current_line = indicies[closest_line];
+        let offset = cursor - current_line?.index ?? 0;
+
+        let new_line = indicies[closest_line + 1];
+        cursor = new_line?.index ?? code.length;
         cursor = Number.isNaN(cursor) ? code.length : cursor;
+        cursor += Math.min(offset, new_line?.length ?? 0);
       } else if (e.key === 'Backspace') {
         e.preventDefault();
         let splice = code.split('');
@@ -209,6 +222,8 @@
 {:else}
   <pre>stack: {result.stack.join(', ')}</pre>
 {/if}
+
+<p>{cursor}</p>
 
 <div id="device">
   <canvas id="buffer" bind:this={canvas} width="231px" height="143px"></canvas>
