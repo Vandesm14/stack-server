@@ -165,6 +165,13 @@
         }
         cursor = indicies[closest_line + 1] + 1 ?? 0;
         cursor = Number.isNaN(cursor) ? code.length : cursor;
+      } else if (e.key === 'Backspace') {
+        e.preventDefault();
+        let splice = code.split('');
+        splice.splice(cursor - 1, 1);
+
+        code = splice.join('');
+        cursor -= 1;
       }
 
       cursor = Math.max(0, Math.min(cursor, code.length));
@@ -190,20 +197,8 @@
       }
     };
 
-    const keyup = (e: KeyboardEvent) => {
-      if (e.key === 'Backspace') {
-        e.preventDefault();
-        let splice = code.split('');
-        splice.splice(cursor - 1, 1);
-
-        code = splice.join('');
-        cursor -= 1;
-      }
-    };
-
     document.addEventListener('keydown', keydown);
     document.addEventListener('keypress', keypress);
-    document.addEventListener('keyup', keyup);
   });
 </script>
 
