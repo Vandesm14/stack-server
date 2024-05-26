@@ -9,8 +9,19 @@
   let canvas: HTMLCanvasElement | null = null;
 
   let code = `'(fn\n  2 2 +\n  'a def\n)\n\ncall`;
+  $: indicies = newLineIndicies(code);
   // let code = `1234567890123456`;
   // let code = `1\n2\n3\n4\n5\n6\n7`;
+
+  function newLineIndicies(code: string): Array<number> {
+    let indicies: Array<number> = [0];
+    for (let i = 0; i < code.length; i++) {
+      if (code[i] === '\n') {
+        indicies.push(i);
+      }
+    }
+    return indicies;
+  }
 
   let waiting = false;
   type Response = {
@@ -111,10 +122,6 @@
     }
     let lines_lookup: Array<[number, number]> = generateLinesLookup(formatted_code, max_chars);
 
-    console.log(lines_lookup);
-
-    debugger;
-
     for (let y = 0; y < max_lines; y++) {
       for (let x = 0; x < max_chars; x++) {
         if (lines_lookup.findIndex(([lx, ly]) => lx === x && ly === y) === cursor) {
@@ -123,7 +130,7 @@
           c.fillStyle = 'black';
         }
 
-        if (buffer_window[y][x]) {
+        if (buffer_window[y]?.[x]) {
           c.fillText(buffer_window[y][x], x * 14.4, (y + 1) * 20);
         }
 
@@ -140,6 +147,24 @@
         cursor -= 1;
       } else if (e.key === 'ArrowRight') {
         cursor += 1;
+      } else if (e.key === 'ArrowUp') {
+        let closest_line = 0;
+        for (let i in indicies) {
+          if (indicies[i] < cursor) {
+            closest_line = parseInt(i);
+          } else break;
+        }
+        cursor = indicies[closest_line - 1] + 1 ?? 0;
+        cursor = Number.isNaN(cursor) ? 0 : cursor;
+      } else if (e.key === 'ArrowDown') {
+        let closest_line = 0;
+        for (let i in indicies) {
+          if (indicies[i] < cursor) {
+            closest_line = parseInt(i);
+          } else break;
+        }
+        cursor = indicies[closest_line + 1] + 1 ?? 0;
+        cursor = Number.isNaN(cursor) ? code.length : cursor;
       }
 
       cursor = Math.max(0, Math.min(cursor, code.length));
