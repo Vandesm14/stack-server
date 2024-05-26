@@ -6,6 +6,7 @@
     error: string,
   }
 
+  let waiting = false;
   let code = '';
   let result: Response = {
     stack: [],
@@ -13,12 +14,15 @@
   };
 
   async function execute() {
+    waiting = true;
+
     let res = await fetch("http://127.0.0.1:7777/execute", {
       method: 'POST',
       body: code,
     });
 
     result = await res.json();
+    waiting = false;
   }
 
   const keydown: KeyboardEventHandler<HTMLTextAreaElement> = (e) => {
@@ -28,11 +32,16 @@
   }
 </script>
 
-{#if result.error}
-<pre>error: {result.error}</pre>
+{#if waiting}
+  <pre>executing...</pre>
 {:else}
-<pre>{result.stack.join(', ')}</pre>
+  {#if result.error}
+  <pre>error: {result.error}</pre>
+  {:else}
+  <pre>stack: {result.stack.join(', ')}</pre>
+  {/if}
 {/if}
+
 <textarea bind:value={code} on:keydown={keydown}></textarea>
 <button on:click={execute}>Execute</button>
 
