@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { KeyboardEventHandler } from 'svelte/elements';
+  import _ from 'underscore';
 
   type Mode = 'edit' | 'run';
   let mode: Mode = 'edit';
@@ -64,33 +65,43 @@
 
     c.fillStyle = 'white';
     c.font = '24px monospace';
-    c.fillText('1234567890123456', 0, 20);
-    c.fillText('1234567890123456', 0, 40);
-    c.fillText('1234567890123456', 0, 60);
-    c.fillText('1234567890123456', 0, 80);
-    c.fillText('1234567890123456', 0, 100);
-    c.fillText('1234567890123456', 0, 120);
-    c.fillText('1234567890123456', 0, 140);
+
+    let max = 16 * 7;
+    let missing = max - code.length;
+    let padded = code + ' '.repeat(missing);
+    let chunks = _.chunk(padded.split(''), 16);
+    for (let i = 0; i < 7; i++) {
+      c.fillText(chunks[i].join(''), 0, (i + 1) * 20);
+    }
   }
 
   onMount(() => {
     setInterval(draw, 1000 / 20);
   });
 
-  const keydown: KeyboardEventHandler<HTMLInputElement> = (e) => {
-    e.preventDefault();
-
-    if (e.key === 'Enter' && e.ctrlKey) {
-      execute();
-    }
-  };
+  const keydown: KeyboardEventHandler<HTMLInputElement> = (e) => {};
 
   const keypress: KeyboardEventHandler<HTMLInputElement> = (e) => {
     e.preventDefault();
 
-    if (e.key) {
-      cursor += 1;
-      code += e.key;
+    if (e.key === 'Enter' && e.ctrlKey) {
+      e.preventDefault();
+      execute();
+      return;
+    }
+
+    cursor += 1;
+    code += e.key;
+  };
+
+  const keyup: KeyboardEventHandler<HTMLInputElement> = (e) => {
+    if (e.key === 'Backspace') {
+      e.preventDefault();
+      let splice = code.split('');
+      splice.splice(cursor - 1, 1);
+
+      code = splice.join('');
+      cursor -= 1;
     }
   };
 </script>
@@ -105,7 +116,7 @@
 
 <div id="device">
   <canvas id="buffer" bind:this={canvas} width="231px" height="143px"></canvas>
-  <input type="text" on:keydown={keydown} on:keypress={keypress} />
+  <input type="text" on:keydown={keyup} on:keypress={keypress} autofocus />
   <button on:click={change_mode}>Mode</button>
 </div>
 
