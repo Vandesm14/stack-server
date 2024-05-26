@@ -8,7 +8,9 @@
   let cursor = 0;
   let canvas: HTMLCanvasElement | null = null;
 
-  let code = '';
+  let code = `'(fn\n  2 2 +\n  'a def\n)\n\ncall`;
+  // let code = `1234567890123456`;
+  // let code = `1\n2\n3\n4\n5\n6\n7`;
 
   let waiting = false;
   type Response = {
@@ -64,12 +66,48 @@
     c.font = '24px monospace';
 
     let max = 16 * 7;
-    let missing = max - code.length;
-    let padded = code + ' '.repeat(missing);
-    let chunks = _.chunk(padded.split(''), 16);
-    for (let i = 0; i < 7; i++) {
-      c.fillText(chunks[i].join(''), 0, (i + 1) * 20);
+
+    let formatted_code = code
+      .split('\n')
+      .map((s) => `:${s}`)
+      .join('\n');
+    let lines = [];
+    let line = '';
+    for (let si in formatted_code.split('')) {
+      let i = parseInt(si);
+      let char = formatted_code[i];
+      if ((line.length % 16 === 0 && line.length > 0) || char === '\n') {
+        lines.push(line);
+        line = '';
+      }
+
+      if (char !== '\n') {
+        line += char;
+      }
     }
+    lines.push(line);
+
+    const max_lines = 7;
+    const max_chars = 16;
+
+    let buffer_window = lines.slice(0, max_lines);
+
+    debugger;
+
+    for (let y = 0; y < max_lines; y++) {
+      for (let x = 0; x < max_chars; x++) {
+        if (buffer_window[y][x]) {
+          c.fillText(buffer_window[y][x], x * 14.4, (y + 1) * 20);
+        }
+      }
+    }
+
+    // let missing = max - code.length;
+    // let padded = code + ' '.repeat(missing);
+    // let chunks = _.chunk(padded.split(''), 16);
+    // for (let i = 0; i < 7; i++) {
+    //   c.fillText(chunks[i].join(''), 0, (i + 1) * 20);
+    // }
   }
 
   onMount(() => {
