@@ -103,6 +103,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
       ..Config::debug_default()
     })
     .mount("/", FileServer::from("../frontend/dist"))
+    .mount("/", FileServer::from("../frontend/src/assets"))
     .mount("/", routes![execute])
     .launch()
     .await?;
