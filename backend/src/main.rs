@@ -1,19 +1,16 @@
 #[macro_use]
 extern crate rocket;
-use std::time::Duration;
+use std::{net::Ipv4Addr, time::Duration};
 
 use rocket::{
+  fs::FileServer,
   http::Status,
   response::{content, status},
-  Config,
+  routes, Config,
 };
 use serde::ser::SerializeStruct;
 use serde::Serialize;
 use std::error::Error;
-
-use rocket::http::Method;
-use rocket::routes;
-use rocket_cors::{AllowedOrigins, CorsOptions};
 
 use stack_core::prelude::*;
 
@@ -99,23 +96,14 @@ fn execute(code: &str) -> status::Custom<content::RawText<String>> {
 
 #[rocket::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-  let cors = CorsOptions::default()
-    .allowed_origins(AllowedOrigins::all())
-    .allowed_methods(
-      vec![Method::Get, Method::Post, Method::Patch]
-        .into_iter()
-        .map(From::from)
-        .collect(),
-    )
-    .allow_credentials(true);
-
   rocket::build()
     .configure(Config {
-      port: 7777,
+      port: 5173,
+      address: Ipv4Addr::new(0, 0, 0, 0).into(),
       ..Config::debug_default()
     })
+    .mount("/", FileServer::from("../frontend/dist"))
     .mount("/", routes![execute])
-    .attach(cors.to_cors().unwrap())
     .launch()
     .await?;
 

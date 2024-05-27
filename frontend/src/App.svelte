@@ -77,7 +77,7 @@ a`;
   async function execute() {
     waiting = true;
 
-    let res = await fetch(`http://${document.location.hostname}:7777/execute`, {
+    let res = await fetch(`http://${document.location.host}/execute`, {
       method: 'POST',
       body: code
     });
