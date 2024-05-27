@@ -14,9 +14,24 @@
   };
 
   // let code = `'(fn!\n  2 2 +\n12345678901234512345678901234561234567890123456\n'a def`;
-  let code = `'(fn!\n  2 2 +\n`;
+  let code = `0 'a def
+'(fn
+  1 'a def
+
+  '(fn a)
+)
+
+call
+call
+a`;
+
   $: code_with_space = code.endsWith(' ') ? code : `${code} `;
   $: chars = stringToChars(code_with_space);
+  $: line_offset = 0;
+  $: buffer_window = (() => {
+    let start = charAtLineStart(line_offset);
+    return chars.slice(start?.index ?? 0);
+  })();
 
   function charAtCursor(): Char | undefined {
     return chars.find((char) => char.index === cursor);
@@ -46,7 +61,6 @@
   }
 
   let cursor = 0;
-  let line_offset = 0;
   let canvas: HTMLCanvasElement | null = null;
 
   $: (() => {
@@ -67,24 +81,27 @@
     c.font = '24px monospace';
 
     let wrapping = false;
-    for (let char of chars) {
+    for (let char of buffer_window) {
       wrapping = char.wrapped;
 
       let x = char.line_index;
-      let y = char.line;
+      let y = char.line - line_offset;
+
+      let x_tile = 14.4;
+      let y_tile = 20.1;
 
       if (!wrapping) {
-        if (x === 0) c.fillText(':', x * 14.4, (y + 1) * 20);
+        if (x === 0) c.fillText(':', x * x_tile, (y + 1) * y_tile);
         x += 1;
       }
 
       if (char.index === cursor) {
         c.fillStyle = 'white';
-        c.fillRect(x * 14.4, y * 20 + 2, 14.4, 22);
+        c.fillRect(x * x_tile, y * y_tile + 2, x_tile, y_tile + 2);
         c.fillStyle = 'black';
       }
 
-      c.fillText(char.char, x * 14.4, (y + 1) * 20);
+      c.fillText(char.char, x * x_tile, (y + 1) * y_tile);
       c.fillStyle = 'white';
     }
   })();
@@ -128,10 +145,19 @@
       splice.splice(cursor, 1);
       code = splice.join('');
     }
-
-    console.log({ code, code_with_space });
-
     cursor = Math.max(0, Math.min(cursor, code_with_space.length - 1));
+
+    let new_current_char = charAtCursor();
+    let new_current_line = new_current_char?.line ?? 0;
+    if (new_current_line !== current_line) {
+      if (new_current_line < line_offset) {
+        // Cursor decreased
+        line_offset = Math.max(new_current_line, 0);
+      } else if (new_current_line >= line_offset + 7) {
+        // Cursor increased
+        line_offset = Math.max(new_current_line - 7 + 1, 0);
+      }
+    }
   }
 
   function write(string: string) {
