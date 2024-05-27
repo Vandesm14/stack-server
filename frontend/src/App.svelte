@@ -131,9 +131,9 @@
       }
 
       if (char.index === cursor[mode]) {
-        c.fillStyle = 'white';
-        c.fillRect(x * x_tile, y * y_tile + 2, x_tile, y_tile + 2);
-        c.fillStyle = 'black';
+        // c.fillStyle = 'white';
+        c.fillRect(x * x_tile, y * y_tile + 2, -2, y_tile + 2);
+        // c.fillStyle = 'black';
       }
 
       c.fillText(char.char, x * x_tile, (y + 1) * y_tile);
@@ -183,7 +183,7 @@
       }
     } else if (string === 'Backspace' || string === 'Delete') {
       let splice = code.split('');
-      splice.splice(cursor[mode], 1);
+      splice.splice(Math.max(cursor[mode] - 1, 0), 1);
       code = splice.join('');
       cursor[mode] -= 1;
     }
