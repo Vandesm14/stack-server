@@ -17,6 +17,21 @@
   let code = `'(fn!\n  2 2 +\n`;
   $: chars = stringToChars(code);
 
+  function charAtCursor(): Char | undefined {
+    return chars.find((char) => char.index === cursor);
+  }
+
+  function charAtLineStart(line: number): Char | undefined {
+    return chars.find((char) => char.line === line);
+  }
+
+  function charAtLineEnd(line: number): Char | undefined {
+    return chars
+      .slice()
+      .reverse()
+      .find((char) => char.line === line);
+  }
+
   async function execute() {
     waiting = true;
 
@@ -74,44 +89,46 @@
   })();
 
   function move(string: string) {
-    // let closest_line = 0;
-    // for (let i in indicies) {
-    //   if (indicies[i].index <= cursor) {
-    //     closest_line = parseInt(i);
-    //   } else break;
-    // }
-    // let current_line = indicies[closest_line];
-    // let offset = cursor - current_line?.index ?? 0;
-    // if (string === 'ArrowLeft') {
-    //   cursor -= 1;
-    // } else if (string === 'ArrowRight') {
-    //   cursor += 1;
-    // } else if (string === 'ArrowUp') {
-    //   let new_line = indicies[closest_line - 1];
-    //   cursor = new_line?.index ?? 0;
-    //   cursor = Number.isNaN(cursor) ? 0 : cursor;
-    //   cursor += Math.min(offset, new_line?.length ?? 0);
-    // } else if (string === 'ArrowDown') {
-    //   let new_line = indicies[closest_line + 1];
-    //   cursor = new_line?.index ?? code.length;
-    //   cursor = Number.isNaN(cursor) ? code.length : cursor;
-    //   cursor += Math.min(offset, new_line?.length ?? 0);
-    //   if (closest_line + 1 > line_offset + max_lines - 2) {
-    //     line_offset += 1;
-    //   }
-    // } else if (string === 'Home') {
-    //   cursor = current_line.index;
-    // } else if (string === 'End') {
-    //   let new_line = indicies[closest_line + 1];
-    //   cursor = new_line?.index - 1 ?? code.length;
-    //   cursor = Number.isNaN(cursor) ? code.length : cursor;
-    // } else if (string === 'Backspace') {
-    //   let splice = code.split('');
-    //   splice.splice(cursor - 1, 1);
-    //   code = splice.join('');
-    //   cursor -= 1;
-    // }
-    // cursor = Math.max(0, Math.min(cursor, code.length));
+    let current_char = charAtCursor();
+    let current_line = current_char?.line ?? 0;
+
+    if (string === 'ArrowLeft') {
+      cursor -= 1;
+    } else if (string === 'ArrowRight') {
+      cursor += 1;
+    } else if (string === 'ArrowUp') {
+      let next_line = charAtLineStart(current_line - 1);
+      let next_line_end = charAtLineEnd(current_line - 1);
+      if (current_char && next_line && next_line_end) {
+        cursor = Math.min(next_line.index + current_char.line_index, next_line_end.index);
+      } else {
+        cursor = code.length;
+      }
+    } else if (string === 'ArrowDown') {
+      let next_line = charAtLineStart(current_line + 1);
+      let next_line_end = charAtLineEnd(current_line + 1);
+      if (current_char && next_line && next_line_end) {
+        cursor = Math.min(next_line.index + current_char.line_index, next_line_end.index);
+      } else {
+        cursor = code.length;
+      }
+    } else if (string === 'Home') {
+      let next_line = charAtLineStart(current_line);
+      if (next_line) {
+        cursor = next_line.index;
+      }
+    } else if (string === 'End') {
+      let next_line = charAtLineEnd(current_line);
+      if (next_line) {
+        cursor = next_line.index;
+      }
+    } else if (string === 'Backspace') {
+      let splice = code.split('');
+      splice.splice(cursor - 1, 1);
+      code = splice.join('');
+      cursor -= 1;
+    }
+    cursor = Math.max(0, Math.min(cursor, code.length));
   }
 
   function write(string: string) {
