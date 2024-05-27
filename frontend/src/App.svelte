@@ -271,18 +271,9 @@ a`;
 </div>
 
 <style lang="scss">
-  .row {
-    display: flex;
-    flex-direction: row;
-  }
-
   .col {
     display: flex;
     flex-direction: column;
-  }
-
-  .center {
-    justify-content: center;
   }
 
   #device {
