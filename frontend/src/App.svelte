@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { stringToChars, type Char } from '$lib/chars';
+  import { stringToChars, type Char } from './lib/chars';
   import { onMount } from 'svelte';
   import _ from 'underscore';
   //@ts-expect-error: Don't have types for this lib
@@ -38,18 +38,29 @@ a`;
     if (mode === Mode.Edit) {
       return code.endsWith(' ') ? code : `${code} `;
     } else {
-      return 'Run';
+      if (waiting) {
+        return 'Waiting...';
+      } else {
+        if (result.error) {
+          return `Err: ${result.error}`;
+        } else {
+          return result.stack.join(', ');
+        }
+      }
     }
   })();
   $: chars = stringToChars(code_with_space);
-  $: line_offset = 0;
+  $: line_offset = {
+    [Mode.Edit]: 0,
+    [Mode.Run]: 0
+  };
   $: buffer_window = (() => {
-    let start = charAtLineStart(line_offset);
+    let start = charAtLineStart(line_offset[mode]);
     return chars.slice(start?.index ?? 0);
   })();
 
   function charAtCursor(): Char | undefined {
-    return chars.find((char) => char.index === cursor);
+    return chars.find((char) => char.index === cursor[mode]);
   }
 
   function charAtLineStart(line: number): Char | undefined {
@@ -66,7 +77,7 @@ a`;
   async function execute() {
     waiting = true;
 
-    let res = await fetch('http://127.0.0.1:7777/execute', {
+    let res = await fetch(`http://${document.location.hostname}:7777/execute`, {
       method: 'POST',
       body: code
     });
@@ -75,7 +86,10 @@ a`;
     waiting = false;
   }
 
-  let cursor = 0;
+  let cursor = {
+    [Mode.Edit]: 0,
+    [Mode.Run]: 0
+  };
   let canvas: HTMLCanvasElement | null = null;
 
   $: (() => {
@@ -100,7 +114,7 @@ a`;
       wrapping = char.wrapped;
 
       let x = char.line_index;
-      let y = char.line - line_offset;
+      let y = char.line - line_offset[mode];
 
       let x_tile = 14.4;
       let y_tile = 20.1;
@@ -110,7 +124,7 @@ a`;
         x += 1;
       }
 
-      if (char.index === cursor) {
+      if (char.index === cursor[mode]) {
         c.fillStyle = 'white';
         c.fillRect(x * x_tile, y * y_tile + 2, x_tile, y_tile + 2);
         c.fillStyle = 'black';
@@ -121,69 +135,78 @@ a`;
     }
   })();
 
+  function clamp_cursor() {
+    cursor[mode] = Math.max(0, Math.min(cursor[mode], code_with_space.length - 1));
+  }
+
   function move(string: string) {
+    navigator.vibrate(50);
+
     let current_char = charAtCursor();
     let current_line = current_char?.line ?? 0;
 
     if (string === 'ArrowLeft') {
-      cursor -= 1;
+      cursor[mode] -= 1;
     } else if (string === 'ArrowRight') {
-      cursor += 1;
+      cursor[mode] += 1;
     } else if (string === 'ArrowUp') {
       let next_line = charAtLineStart(current_line - 1);
       let next_line_end = charAtLineEnd(current_line - 1);
       if (current_char && next_line && next_line_end) {
-        cursor = Math.min(next_line.index + current_char.line_index, next_line_end.index);
+        cursor[mode] = Math.min(next_line.index + current_char.line_index, next_line_end.index);
       } else {
-        cursor = 0;
+        cursor[mode] = 0;
       }
     } else if (string === 'ArrowDown') {
       let next_line = charAtLineStart(current_line + 1);
       let next_line_end = charAtLineEnd(current_line + 1);
       if (current_char && next_line && next_line_end) {
-        cursor = Math.min(next_line.index + current_char.line_index, next_line_end.index);
+        cursor[mode] = Math.min(next_line.index + current_char.line_index, next_line_end.index);
       } else {
-        cursor = code_with_space.length;
+        cursor[mode] = code_with_space.length;
       }
     } else if (string === 'Home') {
       let next_line = charAtLineStart(current_line);
       if (next_line) {
-        cursor = next_line.index;
+        cursor[mode] = next_line.index;
       }
     } else if (string === 'End') {
       let next_line = charAtLineEnd(current_line);
       if (next_line) {
-        cursor = next_line.index;
+        cursor[mode] = next_line.index;
       }
     } else if (string === 'Backspace' || string === 'Delete') {
       let splice = code.split('');
-      splice.splice(cursor, 1);
+      splice.splice(cursor[mode], 1);
       code = splice.join('');
     }
-    cursor = Math.max(0, Math.min(cursor, code_with_space.length - 1));
+
+    clamp_cursor();
 
     let new_current_char = charAtCursor();
     let new_current_line = new_current_char?.line ?? 0;
     if (new_current_line !== current_line) {
-      if (new_current_line < line_offset) {
+      if (new_current_line < line_offset[mode]) {
         // Cursor decreased
-        line_offset = Math.max(new_current_line, 0);
-      } else if (new_current_line >= line_offset + 7) {
+        line_offset[mode] = Math.max(new_current_line, 0);
+      } else if (new_current_line >= line_offset[mode] + 7) {
         // Cursor increased
-        line_offset = Math.max(new_current_line - 7 + 1, 0);
+        line_offset[mode] = Math.max(new_current_line - 7 + 1, 0);
       }
     }
   }
 
   function write(string: string) {
+    navigator.vibrate(50);
+
     if (string === 'Enter') {
-      code = code.slice(0, cursor) + '\n' + code.slice(cursor);
-      cursor += 1;
+      code = code.slice(0, cursor[mode]) + '\n' + code.slice(cursor[mode]);
+      cursor[mode] += 1;
     }
 
     if (string.length === 1) {
-      code = code.slice(0, cursor) + string + code.slice(cursor);
-      cursor += 1;
+      code = code.slice(0, cursor[mode]) + string + code.slice(cursor[mode]);
+      cursor[mode] += 1;
     }
   }
 
@@ -220,18 +243,11 @@ a`;
     if (mode === Mode.Run) {
       mode = Mode.Edit;
     } else if (mode === Mode.Edit) {
+      execute();
       mode = Mode.Run;
     }
   }
 </script>
-
-{#if waiting}
-  <pre>executing...</pre>
-{:else if result.error}
-  <pre>error: {result.error}</pre>
-{:else}
-  <pre>stack: {result.stack.join(', ')}</pre>
-{/if}
 
 <div id="device" class="col">
   <canvas id="buffer" bind:this={canvas} width="231px" height="143px"></canvas>
