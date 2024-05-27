@@ -1382,6 +1382,7 @@ dependencies = [
 [[package]]
 name = "stack-core"
 version = "0.1.0"
+source = "git+https://github.com/vandesm14/stack#81d88cec8d5b0f2114399cabce3907d3f03bb329"
 dependencies = [
  "compact_str",
  "internment",
@@ -1405,6 +1406,7 @@ dependencies = [
 [[package]]
 name = "stack-std"
 version = "0.1.0"
+source = "git+https://github.com/vandesm14/stack#81d88cec8d5b0f2114399cabce3907d3f03bb329"
 dependencies = [
  "compact_str",
  "stack-core",

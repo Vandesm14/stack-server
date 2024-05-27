@@ -10,6 +10,6 @@ rocket = "0.5.1"
 serde = { version = "1.0.203", features = ["derive"] }
 serde_json = "1.0.117"
 smol = "2.0.0"
-stack-core = { path = "../../stack/stack-core" }
-stack-std = { path = "../../stack/stack-std" }
+stack-core = { git = "https://github.com/vandesm14/stack" }
+stack-std = { git = "https://github.com/vandesm14/stack" }
 tokio = { version = "1.37.0", features = ["rt-multi-thread"] }
