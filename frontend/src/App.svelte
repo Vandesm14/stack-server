@@ -185,6 +185,7 @@
       let splice = code.split('');
       splice.splice(cursor[mode], 1);
       code = splice.join('');
+      cursor[mode] -= 1;
     }
 
     clamp_cursor();
@@ -205,6 +206,8 @@
 
   function write(string: string) {
     navigator.vibrate(50);
+
+    if (mode !== Mode.Edit) return;
 
     if (string === 'Enter') {
       code = code.slice(0, cursor[mode]) + '\n' + code.slice(cursor[mode]);
