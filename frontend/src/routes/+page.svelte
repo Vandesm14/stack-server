@@ -2,6 +2,8 @@
   import { stringToChars, type Char } from '$lib/chars';
   import { onMount } from 'svelte';
   import _ from 'underscore';
+  //@ts-expect-error: Don't have types for this lib
+  import Keyboard from 'svelte-keyboard';
 
   let waiting = false;
   type Response = {
@@ -12,6 +14,13 @@
     stack: [],
     error: ''
   };
+
+  enum Mode {
+    Edit,
+    Run
+  }
+
+  let mode: Mode = Mode.Edit;
 
   // let code = `'(fn!\n  2 2 +\n12345678901234512345678901234561234567890123456\n'a def`;
   let code = `0 'a def
@@ -25,7 +34,13 @@ call
 call
 a`;
 
-  $: code_with_space = code.endsWith(' ') ? code : `${code} `;
+  $: code_with_space = (() => {
+    if (mode === Mode.Edit) {
+      return code.endsWith(' ') ? code : `${code} `;
+    } else {
+      return 'Run';
+    }
+  })();
   $: chars = stringToChars(code_with_space);
   $: line_offset = 0;
   $: buffer_window = (() => {
@@ -172,24 +187,42 @@ a`;
     }
   }
 
+  const keydown = (e: KeyboardEvent) => {
+    move(e.key);
+  };
+
+  const keypress = (e: KeyboardEvent) => {
+    if (e.key === 'Enter' && e.ctrlKey) {
+      e.preventDefault();
+      execute();
+      return;
+    }
+
+    write(e.key);
+  };
+
+  const virtual_keydown = (e: CustomEvent) => {
+    if (e.detail === 'Space') {
+      write(' ');
+    } else if (e.detail === 'Backspace') {
+      move(e.detail);
+    } else {
+      write(e.detail);
+    }
+  };
+
   onMount(() => {
-    const keydown = (e: KeyboardEvent) => {
-      move(e.key);
-    };
-
-    const keypress = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' && e.ctrlKey) {
-        e.preventDefault();
-        execute();
-        return;
-      }
-
-      write(e.key);
-    };
-
     document.addEventListener('keydown', keydown);
     document.addEventListener('keypress', keypress);
   });
+
+  function switch_mode() {
+    if (mode === Mode.Run) {
+      mode = Mode.Edit;
+    } else if (mode === Mode.Edit) {
+      mode = Mode.Run;
+    }
+  }
 </script>
 
 {#if waiting}
@@ -203,14 +236,21 @@ a`;
 <div id="device" class="col">
   <canvas id="buffer" bind:this={canvas} width="231px" height="143px"></canvas>
   <div id="button-grid">
+    <div id="function-grid">
+      <button on:click={() => switch_mode()} id="home">Mode</button>
+    </div>
     <div id="navigation-grid">
+      <button on:click={() => move('Home')} id="home">Home</button>
       <button on:click={() => move('ArrowUp')} id="up">Up</button>
+      <button on:click={() => move('End')} id="end">End</button>
       <button on:click={() => move('ArrowLeft')} id="left">Left</button>
       <button on:click={() => write('Enter')} id="enter">Enter</button>
       <button on:click={() => move('ArrowRight')} id="right">Right</button>
       <button on:click={() => move('ArrowDown')} id="down">Down</button>
     </div>
-    <button on:click={() => move('Backspace')} id="delete">Del</button>
+  </div>
+  <div class="keyboard-container">
+    <Keyboard on:keydown={virtual_keydown} />
   </div>
 </div>
 
@@ -238,28 +278,15 @@ a`;
     }
 
     #button-grid {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-around;
+
       #navigation-grid {
         display: grid;
         grid-template-columns: 1fr 1fr 1fr;
         grid-template-rows: 1fr 1fr 1fr;
-
-        width: min-content;
-
-        #up {
-          grid-column-start: 2;
-        }
-
-        #left {
-          grid-row-start: 2;
-        }
-
-        #enter {
-          grid-row-start: 2;
-        }
-
-        #right {
-          grid-row-start: 2;
-        }
+        align-self: flex-end;
 
         #down {
           grid-column-start: 2;
