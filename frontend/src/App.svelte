@@ -23,33 +23,39 @@
   let mode: Mode = Mode.Edit;
 
   // let code = `'(fn!\n  2 2 +\n12345678901234512345678901234561234567890123456\n'a def`;
-  let code = `0 'a def
-'(fn
-  1 'a def
+  // let code = `0 'a def
+  // '(fn
+  //   1 'a def
 
-  '(fn a)
-)
+  //   '(fn a)
+  // )
 
-call
-call
-a`;
+  // call
+  // call
+  // a`;
+  let code = `"hello, "\n"world"\nconcat`;
+
+  function save_code() {
+    localStorage.setItem('code', code);
+  }
 
   $: code_with_space = (() => {
     if (mode === Mode.Edit) {
       return code.endsWith(' ') ? code : `${code} `;
     } else {
       if (waiting) {
-        return 'Waiting...';
+        return ' ';
       } else {
         if (result.error) {
           return `Err: ${result.error}`;
         } else {
-          return result.stack.join(', ');
+          let stack = result.stack.join(', ');
+          return stack.endsWith(' ') ? stack : `${stack} `;
         }
       }
     }
   })();
-  $: chars = stringToChars(code_with_space);
+  $: chars = stringToChars(code_with_space, mode === Mode.Edit ? 15 : 16);
   $: line_offset = {
     [Mode.Edit]: 0,
     [Mode.Run]: 0
@@ -119,7 +125,7 @@ a`;
       let x_tile = 14.4;
       let y_tile = 20.1;
 
-      if (!wrapping) {
+      if (!wrapping && mode !== Mode.Run) {
         if (x === 0) c.fillText(':', x * x_tile, (y + 1) * y_tile);
         x += 1;
       }
@@ -182,6 +188,7 @@ a`;
     }
 
     clamp_cursor();
+    save_code();
 
     let new_current_char = charAtCursor();
     let new_current_line = new_current_char?.line ?? 0;
@@ -208,6 +215,8 @@ a`;
       code = code.slice(0, cursor[mode]) + string + code.slice(cursor[mode]);
       cursor[mode] += 1;
     }
+
+    save_code();
   }
 
   const keydown = (e: KeyboardEvent) => {
@@ -235,6 +244,11 @@ a`;
   };
 
   onMount(() => {
+    let storage = localStorage.getItem('code');
+    if (storage !== null) {
+      code = storage;
+    }
+
     document.addEventListener('keydown', keydown);
     document.addEventListener('keypress', keypress);
   });
@@ -245,6 +259,8 @@ a`;
     } else if (mode === Mode.Edit) {
       execute();
       mode = Mode.Run;
+      cursor[mode] = 0;
+      line_offset[mode] = 0;
     }
   }
 </script>
@@ -253,7 +269,7 @@ a`;
   <canvas id="buffer" bind:this={canvas} width="231px" height="143px"></canvas>
   <div id="button-grid">
     <div id="function-grid">
-      <button on:click={() => switch_mode()} id="home">Mode</button>
+      <button on:click={() => switch_mode()} id="home">Run/Edit</button>
     </div>
     <div id="navigation-grid">
       <button on:click={() => move('Home')} id="home">Home</button>

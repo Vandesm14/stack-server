@@ -7,28 +7,27 @@ export type Char = {
 };
 
 export const max_lines = 7;
-export const max_chars = 15;
 
-export function stringToChars(string: string): Array<Char> {
+export function stringToChars(string: string, max_chars: number): Array<Char> {
   let chars: Array<Char> = [];
   let line = 0;
   let line_index = 0;
   let wrapping = false;
 
-  string = string.replaceAll("\n", " \n");
+  string = string.replaceAll('\n', ' \n');
 
   let new_line = () => {
     line_index = 0;
     line += 1;
   };
 
-  let string_chars = string.split("");
+  let string_chars = string.split('');
   let count = 0;
   for (let i in string_chars) {
     let char = string_chars[i];
     let local_max = wrapping ? max_chars + 1 : max_chars;
 
-    if (char === "\n") {
+    if (char === '\n') {
       new_line();
       wrapping = false;
       continue;
