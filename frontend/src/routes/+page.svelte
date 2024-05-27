@@ -13,7 +13,8 @@
     error: ''
   };
 
-  let code = `'(fn!\n  2 2 +\n12345678901234512345678901234561234567890123456\n'a def`;
+  // let code = `'(fn!\n  2 2 +\n12345678901234512345678901234561234567890123456\n'a def`;
+  let code = `'(fn!\n  2 2 +\n`;
   $: chars = stringToChars(code);
 
   async function execute() {
@@ -54,14 +55,21 @@
       wrapping = char.wrapped;
 
       let x = char.line_index;
-      let y = char.line + 1;
+      let y = char.line;
 
       if (!wrapping) {
-        if (x === 0) c.fillText(':', x * 14.4, y * 20);
+        if (x === 0) c.fillText(':', x * 14.4, (y + 1) * 20);
         x += 1;
       }
 
-      c.fillText(char.char, x * 14.4, y * 20);
+      if (char.index === cursor) {
+        c.fillStyle = 'white';
+        c.fillRect(x * 14.4, y * 20 + 2, 14.4, 22);
+        c.fillStyle = 'black';
+      }
+
+      c.fillText(char.char, x * 14.4, (y + 1) * 20);
+      c.fillStyle = 'white';
     }
   })();
 

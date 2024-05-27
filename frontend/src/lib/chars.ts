@@ -15,6 +15,7 @@ export function stringToChars(string: string): Array<Char> {
   let line_index = 0;
   let wrapping = false;
 
+  string = string.replaceAll('\n', ' \n');
   string = string.endsWith('\n') ? `${string} ` : string;
 
   let new_line = () => {line_index = 0; line += 1;};
