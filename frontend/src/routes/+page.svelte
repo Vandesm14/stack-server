@@ -15,7 +15,8 @@
 
   // let code = `'(fn!\n  2 2 +\n12345678901234512345678901234561234567890123456\n'a def`;
   let code = `'(fn!\n  2 2 +\n`;
-  $: chars = stringToChars(code);
+  $: code_with_space = code.endsWith(' ') ? code : `${code} `;
+  $: chars = stringToChars(code_with_space);
 
   function charAtCursor(): Char | undefined {
     return chars.find((char) => char.index === cursor);
@@ -102,7 +103,7 @@
       if (current_char && next_line && next_line_end) {
         cursor = Math.min(next_line.index + current_char.line_index, next_line_end.index);
       } else {
-        cursor = code.length;
+        cursor = 0;
       }
     } else if (string === 'ArrowDown') {
       let next_line = charAtLineStart(current_line + 1);
@@ -110,7 +111,7 @@
       if (current_char && next_line && next_line_end) {
         cursor = Math.min(next_line.index + current_char.line_index, next_line_end.index);
       } else {
-        cursor = code.length;
+        cursor = code_with_space.length;
       }
     } else if (string === 'Home') {
       let next_line = charAtLineStart(current_line);
@@ -122,13 +123,15 @@
       if (next_line) {
         cursor = next_line.index;
       }
-    } else if (string === 'Backspace') {
+    } else if (string === 'Backspace' || string === 'Delete') {
       let splice = code.split('');
-      splice.splice(cursor - 1, 1);
+      splice.splice(cursor, 1);
       code = splice.join('');
-      cursor -= 1;
     }
-    cursor = Math.max(0, Math.min(cursor, code.length));
+
+    console.log({ code, code_with_space });
+
+    cursor = Math.max(0, Math.min(cursor, code_with_space.length - 1));
   }
 
   function write(string: string) {
@@ -173,17 +176,15 @@
 
 <div id="device" class="col">
   <canvas id="buffer" bind:this={canvas} width="231px" height="143px"></canvas>
-  <div class="row">
-    <button on:click={() => move('ArrowUp')}>Up</button>
-    <button on:click={() => move('ArrowDown')}>Down</button>
-  </div>
-  <div class="row">
-    <button on:click={() => move('ArrowLeft')}>Left</button>
-    <button on:click={() => write('Enter')}>Enter</button>
-    <button on:click={() => move('ArrowRight')}>Right</button>
-  </div>
-  <div class="row">
-    <button on:click={() => move('Backspace')}>Del</button>
+  <div id="button-grid">
+    <div id="navigation-grid">
+      <button on:click={() => move('ArrowUp')} id="up">Up</button>
+      <button on:click={() => move('ArrowLeft')} id="left">Left</button>
+      <button on:click={() => write('Enter')} id="enter">Enter</button>
+      <button on:click={() => move('ArrowRight')} id="right">Right</button>
+      <button on:click={() => move('ArrowDown')} id="down">Down</button>
+    </div>
+    <button on:click={() => move('Backspace')} id="delete">Del</button>
   </div>
 </div>
 
@@ -198,7 +199,46 @@
     flex-direction: column;
   }
 
+  .center {
+    justify-content: center;
+  }
+
   #device {
     width: min-content;
+
+    button {
+      width: 50px;
+      height: 50px;
+    }
+
+    #button-grid {
+      #navigation-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        grid-template-rows: 1fr 1fr 1fr;
+
+        width: min-content;
+
+        #up {
+          grid-column-start: 2;
+        }
+
+        #left {
+          grid-row-start: 2;
+        }
+
+        #enter {
+          grid-row-start: 2;
+        }
+
+        #right {
+          grid-row-start: 2;
+        }
+
+        #down {
+          grid-column-start: 2;
+        }
+      }
+    }
   }
 </style>
