@@ -1,10 +1,9 @@
 <script lang="ts">
-  import { stringToChars, type Char } from './lib/chars';
   import { onMount } from 'svelte';
   import _ from 'underscore';
   //@ts-expect-error: Don't have types for this lib
   import Keyboard from 'svelte-keyboard';
-  import __wbg_init, { run } from './pkg/stack_wasm';
+  import __wbg_init, { string_to_chars, Character } from './pkg/backend';
 
   let waiting = false;
   type Response = {
@@ -57,7 +56,7 @@
       }
     }
   })();
-  $: chars = stringToChars(code_with_space, mode === Mode.Edit ? 15 : 16);
+  $: chars = wasm ? string_to_chars(code_with_space, mode === Mode.Edit ? 15 : 16) : [];
   $: line_offset = {
     [Mode.Edit]: 0,
     [Mode.Run]: 0
@@ -67,15 +66,15 @@
     return chars.slice(start?.index ?? 0);
   })();
 
-  function charAtCursor(): Char | undefined {
+  function charAtCursor(): Character | undefined {
     return chars.find((char) => char.index === cursor[mode]);
   }
 
-  function charAtLineStart(line: number): Char | undefined {
+  function charAtLineStart(line: number): Character | undefined {
     return chars.find((char) => char.line === line);
   }
 
-  function charAtLineEnd(line: number): Char | undefined {
+  function charAtLineEnd(line: number): Character | undefined {
     return chars
       .slice()
       .reverse()
@@ -89,11 +88,12 @@
     };
     waiting = true;
 
-    try {
-      result.stack = run(code);
-    } catch (e) {
-      result.error = e as string;
-    }
+    // TODO: reimplement execute
+    // try {
+    //   result.stack = run(code);
+    // } catch (e) {
+    //   result.error = e as string;
+    // }
 
     waiting = false;
   }
@@ -252,8 +252,8 @@
     }
   };
 
-  onMount(() => {
-    __wbg_init('/stack_wasm_bg.wasm').then((result) => (wasm = result));
+  onMount(async () => {
+    await __wbg_init().then((result) => (wasm = result));
 
     let storage = localStorage.getItem('code');
     if (storage !== null) {
