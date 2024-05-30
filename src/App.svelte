@@ -4,10 +4,11 @@
   import _ from 'underscore';
   //@ts-expect-error: Don't have types for this lib
   import Keyboard from 'svelte-keyboard';
+  import __wbg_init, { run } from './pkg/stack_wasm';
 
   let waiting = false;
   type Response = {
-    stack: Array<string>;
+    stack: Array<any>;
     error: string;
   };
   let result: Response = {
@@ -21,6 +22,7 @@
   }
 
   let mode: Mode = Mode.Edit;
+  let wasm: any;
 
   // let code = `'(fn!\n  2 2 +\n12345678901234512345678901234561234567890123456\n'a def`;
   // let code = `0 'a def
@@ -81,14 +83,18 @@
   }
 
   async function execute() {
+    result = {
+      stack: [],
+      error: ''
+    };
     waiting = true;
 
-    let res = await fetch(`http://${document.location.host}/execute`, {
-      method: 'POST',
-      body: code
-    });
+    try {
+      result.stack = run(code);
+    } catch (e) {
+      result.error = e as string;
+    }
 
-    result = await res.json();
     waiting = false;
   }
 
@@ -247,6 +253,8 @@
   };
 
   onMount(() => {
+    __wbg_init('/stack_wasm_bg.wasm').then((result) => (wasm = result));
+
     let storage = localStorage.getItem('code');
     if (storage !== null) {
       code = storage;
