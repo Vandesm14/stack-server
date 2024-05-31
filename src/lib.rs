@@ -7,7 +7,7 @@ pub struct Character {
   pub wrapped: bool,
 }
 
-pub fn string_to_chars(string: String, max_chars: usize) -> Vec<Character> {
+pub fn string_to_chars(string: &str, max_chars: usize) -> Vec<Character> {
   let mut chars: Vec<Character> = Vec::new();
   let mut line = 0;
   let mut line_index = 0;
@@ -80,13 +80,25 @@ pub enum MoveAction {
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Editor {
-  pub code: String,
   pub cursor: usize,
-  pub mode: EditorMode,
+  pub line_offset: usize,
+
+  pub code: String,
+  pub chars: Vec<Character>,
   pub buffer: String,
+
+  pub mode: EditorMode,
 }
 
 impl Editor {
+  pub fn new(code: String) -> Self {
+    Self {
+      chars: string_to_chars(&code, 15),
+      code,
+      ..Default::default()
+    }
+  }
+
   pub fn navigate(&mut self, action: MoveAction) {
     match action {
       MoveAction::Left => self.cursor -= 1,
@@ -94,5 +106,9 @@ impl Editor {
 
       _ => {}
     }
+  }
+
+  pub fn refresh_chars(&mut self) {
+    self.chars = string_to_chars(&self.code, 15);
   }
 }
