@@ -1,9 +1,4 @@
-mod utils;
-
-use wasm_bindgen::prelude::*;
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-#[wasm_bindgen]
 pub struct Character {
   pub char: char,
   pub index: usize,
@@ -12,7 +7,6 @@ pub struct Character {
   pub wrapped: bool,
 }
 
-#[wasm_bindgen]
 pub fn string_to_chars(string: String, max_chars: usize) -> Vec<Character> {
   let mut chars: Vec<Character> = Vec::new();
   let mut line = 0;
@@ -65,7 +59,6 @@ enum EditorMode {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-#[wasm_bindgen]
 struct Editor {
   code: String,
   cursor: usize,
