@@ -8,7 +8,7 @@ use yew::prelude::*;
 #[function_component(App)]
 pub fn app() -> Html {
   let canvas_ref = use_node_ref();
-  let editor = use_state(|| Editor::new("2 2 +\nh".to_owned()));
+  let editor = use_state(|| Editor::new().with_code("2 2 +\nh".to_owned()));
 
   let move_evt = |action: MoveAction| {
     let editor = editor.clone();
@@ -90,6 +90,7 @@ pub fn app() -> Html {
   html! {
     <main>
       <p>{editor.cursor}</p>
+      <p>{format!("{:?}", editor.buffer)}</p>
       <div id="device" class="col">
         <canvas id="buffer" width="231px" height="143px" ref={canvas_ref}></canvas>
         <div id="button-grid">

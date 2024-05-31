@@ -13,26 +13,21 @@ pub fn string_to_chars(string: &str, max_chars: usize) -> Vec<Character> {
   let mut line_index = 0;
   let mut wrapping = false;
 
-  let string = string.replace('\n', " \n");
-
-  let mut new_line = move || {
-    line_index = 0;
-    line += 1;
-  };
-
   let string_chars = string.chars().enumerate();
   let mut count = 0;
   for (i, char) in string_chars {
     let local_max = if wrapping { max_chars + 1 } else { max_chars };
 
     if char == '\n' {
-      new_line();
+      line_index = 0;
+      line += 1;
       wrapping = false;
       continue;
     }
 
     if (line_index >= local_max) {
-      new_line();
+      line_index = 0;
+      line += 1;
       wrapping = true;
     }
 
@@ -91,24 +86,38 @@ pub struct Editor {
 }
 
 impl Editor {
-  pub fn new(code: String) -> Self {
+  pub fn new() -> Self {
     Self {
-      chars: string_to_chars(&code, 15),
-      code,
       ..Default::default()
     }
   }
 
+  pub fn with_code(mut self, code: String) -> Self {
+    self.code = code;
+    self.refresh_chars();
+    self
+  }
+
+  pub fn set_cursor(&mut self, cursor: usize) {
+    self.cursor = cursor.clamp(0, self.buffer.len() - 1);
+  }
+
   pub fn navigate(&mut self, action: MoveAction) {
     match action {
-      MoveAction::Left => self.cursor -= 1,
-      MoveAction::Right => self.cursor += 1,
+      MoveAction::Left => self.set_cursor(self.cursor - 1),
+      MoveAction::Right => self.set_cursor(self.cursor + 1),
 
       _ => {}
     }
   }
 
   pub fn refresh_chars(&mut self) {
-    self.chars = string_to_chars(&self.code, 15);
+    self.buffer = self.code.replace('\n', " \n");
+
+    if !self.buffer.ends_with(' ') {
+      self.buffer.push(' ');
+    }
+
+    self.chars = string_to_chars(&self.buffer, 15);
   }
 }
