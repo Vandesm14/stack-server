@@ -13,9 +13,8 @@ pub fn string_to_chars(string: &str, max_chars: usize) -> Vec<Character> {
   let mut line_index = 0;
   let mut wrapping = false;
 
-  let string_chars = string.chars().enumerate();
   let mut count = 0;
-  for (i, char) in string_chars {
+  for char in string.chars() {
     let local_max = if wrapping { max_chars + 1 } else { max_chars };
 
     if char == '\n' {
@@ -25,7 +24,7 @@ pub fn string_to_chars(string: &str, max_chars: usize) -> Vec<Character> {
       continue;
     }
 
-    if (line_index >= local_max) {
+    if line_index >= local_max {
       line_index = 0;
       line += 1;
       wrapping = true;
