@@ -52,16 +52,47 @@ pub fn string_to_chars(string: String, max_chars: usize) -> Vec<Character> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-enum EditorMode {
+pub enum EditorMode {
   #[default]
   Edit,
   Run,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub enum MoveAction {
+  #[default]
+  Invalid,
+
+  // Modal
+  Mode,
+
+  // Navigation
+  Home,
+  End,
+  Left,
+  Right,
+  Up,
+  Down,
+
+  // Input
+  Enter,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-struct Editor {
-  code: String,
-  cursor: usize,
-  mode: EditorMode,
-  buffer: String,
+pub struct Editor {
+  pub code: String,
+  pub cursor: usize,
+  pub mode: EditorMode,
+  pub buffer: String,
+}
+
+impl Editor {
+  pub fn navigate(&mut self, action: MoveAction) {
+    match action {
+      MoveAction::Left => self.cursor -= 1,
+      MoveAction::Right => self.cursor += 1,
+
+      _ => {}
+    }
+  }
 }
