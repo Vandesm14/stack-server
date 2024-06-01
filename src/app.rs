@@ -1,6 +1,7 @@
 use std::ops::Deref;
 
-use stack_server::{Editor, EditorMode, MoveAction};
+use stack_server::editor::{Editor, EditorMode, MoveAction};
+use stack_server::shiftable_key::ShiftableKey;
 use wasm_bindgen::{JsCast, JsValue};
 use web_sys::HtmlCanvasElement;
 use yew::prelude::*;
@@ -26,6 +27,16 @@ pub fn app() -> Html {
     Callback::from(move |_| {
       let mut new_editor = editor.deref().clone();
       new_editor.write(char);
+      editor.set(new_editor);
+    })
+  };
+
+  let write_shift_evt = |top_char: char, bottom_char: char| {
+    let editor = editor.clone();
+
+    Callback::from(move |_: MouseEvent| {
+      let mut new_editor = editor.deref().clone();
+      new_editor.write(if editor.shift { top_char } else { bottom_char });
       editor.set(new_editor);
     })
   };
@@ -115,16 +126,16 @@ pub fn app() -> Html {
           </div>
           <div id="keyboard-grid">
             // Row
-            <button onclick={write_evt('!')}>{"!"}</button>
-            <button onclick={write_evt('%')}>{"%"}</button>
-            <button onclick={write_evt('+')}>{"+"}</button>
-            <button onclick={write_evt('-')}>{"-"}</button>
-            <button onclick={write_evt('*')}>{"*"}</button>
-            <button onclick={write_evt('/')}>{"/"}</button>
-            <button onclick={write_evt('<')}>{"<"}</button>
-            <button onclick={write_evt('>')}>{">"}</button>
-            <button onclick={write_evt('=')}>{"="}</button>
-            <button onclick={write_evt('\'')}>{"'"}</button>
+            <ShiftableKey top="!" bottom="!" onclick={write_shift_evt('!', '/')} />
+            <ShiftableKey top="%" bottom="%" onclick={write_shift_evt('%', '%')} />
+            <ShiftableKey top="+" bottom="+" onclick={write_shift_evt('+', '+')} />
+            <ShiftableKey top="-" bottom="-" onclick={write_shift_evt('-', '-')} />
+            <ShiftableKey top="*" bottom="*" onclick={write_shift_evt('*', '*')} />
+            <ShiftableKey top="/" bottom="/" onclick={write_shift_evt('/', '/')} />
+            <ShiftableKey top="<" bottom="<" onclick={write_shift_evt('<', '<')} />
+            <ShiftableKey top=">" bottom=">" onclick={write_shift_evt('>', '>')} />
+            <ShiftableKey top="=" bottom="=" onclick={write_shift_evt('=', '=')} />
+            <ShiftableKey top="'" bottom="'" onclick={write_shift_evt('\'', '\'')} />
 
             // Row
             <button onclick={write_evt('1')}>{"1"}</button>
