@@ -2,4 +2,4 @@ run:
   trunk serve
 
 build:
-  trunk build
+  trunk build --release

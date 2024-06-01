@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use trunk_template::{Editor, EditorMode, MoveAction};
+use stack_server::{Editor, EditorMode, MoveAction};
 use wasm_bindgen::{JsCast, JsValue};
 use web_sys::HtmlCanvasElement;
 use yew::prelude::*;
