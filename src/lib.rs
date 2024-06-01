@@ -187,15 +187,15 @@ impl Editor {
       }
 
       (EditorMode::Edit, MoveAction::Home) => {
-        let next_line = self.chars.char_at_line_start(current_line);
-        if let Some(next_line) = next_line {
-          self.cursor = next_line.index;
+        let current_line = self.chars.char_at_line_start(current_line);
+        if let Some(current_line) = current_line {
+          self.cursor = current_line.index;
         }
       }
       (EditorMode::Edit, MoveAction::End) => {
-        let next_line_end = self.chars.char_at_line_end(current_line);
-        if let Some(next_line_end) = next_line_end {
-          self.cursor = next_line_end.index;
+        let current_line = self.chars.char_at_line_end(current_line);
+        if let Some(current_line_end) = current_line {
+          self.cursor = current_line_end.index;
         }
       }
 
