@@ -8,7 +8,7 @@ use yew::prelude::*;
 #[function_component(App)]
 pub fn app() -> Html {
   let canvas_ref = use_node_ref();
-  let editor = use_state(|| Editor::new().with_code("2 2 +\nh".to_owned()));
+  let editor = use_state(|| Editor::new().with_local_storage());
 
   let move_evt = |action: MoveAction| {
     let editor = editor.clone();
@@ -118,16 +118,16 @@ pub fn app() -> Html {
           </div>
           <div id="keyboard-grid">
             // Row
-            <button onclick={write_evt('1')}>{"!"}</button>
-            <button onclick={write_evt('2')}>{"%"}</button>
-            <button onclick={write_evt('3')}>{"+"}</button>
-            <button onclick={write_evt('4')}>{"-"}</button>
-            <button onclick={write_evt('5')}>{"*"}</button>
-            <button onclick={write_evt('6')}>{"/"}</button>
-            <button onclick={write_evt('7')}>{"<"}</button>
-            <button onclick={write_evt('8')}>{">"}</button>
-            <button onclick={write_evt('9')}>{"="}</button>
-            <button onclick={write_evt('0')}>{"'"}</button>
+            <button onclick={write_evt('!')}>{"!"}</button>
+            <button onclick={write_evt('%')}>{"%"}</button>
+            <button onclick={write_evt('+')}>{"+"}</button>
+            <button onclick={write_evt('-')}>{"-"}</button>
+            <button onclick={write_evt('*')}>{"*"}</button>
+            <button onclick={write_evt('/')}>{"/"}</button>
+            <button onclick={write_evt('<')}>{"<"}</button>
+            <button onclick={write_evt('>')}>{">"}</button>
+            <button onclick={write_evt('=')}>{"="}</button>
+            <button onclick={write_evt('\'')}>{"'"}</button>
 
             // Row
             <button onclick={write_evt('1')}>{"1"}</button>

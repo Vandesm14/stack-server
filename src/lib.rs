@@ -1,4 +1,6 @@
 use stack_core::prelude::*;
+use wasm_bindgen::JsValue;
+use web_sys::Storage;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Character {
@@ -136,6 +138,34 @@ impl Editor {
     self
   }
 
+  pub fn with_local_storage(mut self) -> Self {
+    let storage = web_sys::window().unwrap().local_storage().ok().flatten();
+
+    if let Some(storage) = storage {
+      return self.with_code(
+        storage
+          .get_item("code")
+          .ok()
+          .flatten()
+          .unwrap_or_else(|| "2 2 +".to_owned()),
+      );
+    }
+
+    self
+  }
+
+  pub fn save_to_local_storage(&self) -> Result<(), JsValue> {
+    let storage = web_sys::window().unwrap().local_storage().ok().flatten();
+
+    if let Some(storage) = storage {
+      storage.set_item("code", self.code.as_str())?;
+
+      Ok(())
+    } else {
+      Err(JsValue::from_str("couldn't access local storage"))
+    }
+  }
+
   pub fn set_cursor(&mut self, action: SetCursor, cursor: usize) {
     let max = self.code.len();
 
@@ -150,17 +180,23 @@ impl Editor {
     let current_char = self.chars.char_at_index(self.cursor);
     let current_line = current_char.map(|char| char.line).unwrap_or(0);
 
-    match action {
-      MoveAction::Mode => self.set_mode(if self.mode == EditorMode::Edit {
-        EditorMode::Run
-      } else {
-        EditorMode::Edit
-      }),
+    match (self.mode, action) {
+      (_, MoveAction::Mode) => {
+        self.set_mode(if self.mode == EditorMode::Edit {
+          EditorMode::Run
+        } else {
+          EditorMode::Edit
+        })
+      }
 
-      MoveAction::Left => self.set_cursor(SetCursor::Decrement, 1),
-      MoveAction::Right => self.set_cursor(SetCursor::Increment, 1),
+      (EditorMode::Edit, MoveAction::Left) => {
+        self.set_cursor(SetCursor::Decrement, 1)
+      }
+      (EditorMode::Edit, MoveAction::Right) => {
+        self.set_cursor(SetCursor::Increment, 1)
+      }
 
-      MoveAction::Up => {
+      (EditorMode::Edit, MoveAction::Up) => {
         let next_line = self
           .chars
           .char_at_line_start(current_line.saturating_sub(1));
@@ -179,7 +215,7 @@ impl Editor {
           self.cursor = 0;
         }
       }
-      MoveAction::Down => {
+      (EditorMode::Edit, MoveAction::Down) => {
         let next_line = self.chars.char_at_line_start(current_line + 1);
         let next_line_end = self.chars.char_at_line_end(current_line + 1);
 
@@ -196,10 +232,10 @@ impl Editor {
         }
       }
 
-      MoveAction::Enter => {
+      (EditorMode::Edit, MoveAction::Enter) => {
         self.write('\n');
       }
-      MoveAction::Delete => {
+      (EditorMode::Edit, MoveAction::Delete) => {
         self.set_cursor(SetCursor::Decrement, 1);
         self.code.remove(self.cursor);
         self.refresh_chars();
@@ -223,6 +259,10 @@ impl Editor {
   }
 
   pub fn write(&mut self, char: char) {
+    if self.mode != EditorMode::Edit {
+      return;
+    }
+
     self.code.insert(self.cursor, char);
     self.cursor += 1;
     self.refresh_chars();
@@ -233,6 +273,8 @@ impl Editor {
       self.buffer = self.code.replace('\n', " \n");
       self.buffer.push(' ');
       self.chars = Characters::from_string(&self.buffer, 15);
+
+      self.save_to_local_storage();
     } else if self.mode == EditorMode::Run {
       self.buffer = self.code_result.replace('\n', " \n");
       self.buffer.push(' ');
