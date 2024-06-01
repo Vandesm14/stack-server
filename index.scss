@@ -1,7 +1,11 @@
 html,
 body {
-  height: 100%;
   margin: 0;
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
 }
 
 .col {
@@ -10,6 +14,8 @@ body {
 }
 
 #device {
+  @extend .col;
+
   width: min-content;
 
   button {
@@ -18,9 +24,17 @@ body {
   }
 
   #button-grid {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-around;
+    .dark {
+      background-color: #666;
+      font-weight: bold;
+      color: white;
+    }
+
+    #navigation-row {
+      @extend .row;
+
+      justify-content: space-around;
+    }
 
     #navigation-grid {
       display: grid;
@@ -30,6 +44,16 @@ body {
 
       #down {
         grid-column-start: 2;
+      }
+    }
+
+    #keyboard-grid {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      grid-template-rows: repeat(5, 1fr);
+
+      button {
+        font-size: 1.05rem;
       }
     }
   }

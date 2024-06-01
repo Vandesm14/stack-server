@@ -97,6 +97,7 @@ pub enum MoveAction {
 
   // Input
   Enter,
+  Delete,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -132,7 +133,7 @@ impl Editor {
   }
 
   pub fn set_cursor(&mut self, action: SetCursor, cursor: usize) {
-    let max = self.buffer.len() - 2;
+    let max = self.code.len();
 
     match action {
       SetCursor::Set => self.cursor = cursor.clamp(0, max),
@@ -185,6 +186,15 @@ impl Editor {
         }
       }
 
+      MoveAction::Enter => {
+        self.write('\n');
+      }
+      MoveAction::Delete => {
+        self.set_cursor(SetCursor::Decrement, 1);
+        self.code.remove(self.cursor);
+        self.refresh_chars();
+      }
+
       _ => {}
     };
 
@@ -202,13 +212,15 @@ impl Editor {
     }
   }
 
+  pub fn write(&mut self, char: char) {
+    self.code.insert(self.cursor, char);
+    self.cursor += 1;
+    self.refresh_chars();
+  }
+
   pub fn refresh_chars(&mut self) {
     self.buffer = self.code.replace('\n', " \n");
-
-    if !self.buffer.ends_with(' ') {
-      self.buffer.push(' ');
-    }
-
+    self.buffer.push(' ');
     self.chars = Characters::from_string(&self.buffer, 15);
   }
 
