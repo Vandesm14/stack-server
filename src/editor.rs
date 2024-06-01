@@ -94,6 +94,7 @@ pub enum EditorMode {
 pub enum MoveAction {
   // Modal
   Mode,
+  Shift,
 
   // Navigation
   Home,
@@ -192,6 +193,10 @@ impl Editor {
         } else {
           EditorMode::Edit
         })
+      }
+
+      (EditorMode::Edit, MoveAction::Shift) => {
+        self.shift = !self.shift;
       }
 
       (EditorMode::Edit, MoveAction::Home) => {

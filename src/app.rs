@@ -91,7 +91,11 @@ pub fn app() -> Html {
           }
 
           if char.index == editor.cursor && editor.mode != EditorMode::Run {
-            context.fill_rect(x * x_tile, y * y_tile + 2.0, -2.0, y_tile + 2.0)
+            if editor.shift {
+              context.set_fill_style(&JsValue::from_str("red"));
+            }
+            context.fill_rect(x * x_tile, y * y_tile + 2.0, -2.0, y_tile + 2.0);
+            context.set_fill_style(&JsValue::from_str("white"));
           }
 
           context
@@ -126,16 +130,16 @@ pub fn app() -> Html {
           </div>
           <div id="keyboard-grid">
             // Row
-            <ShiftableKey top="!" bottom="!" onclick={write_shift_evt('!', '/')} />
-            <ShiftableKey top="%" bottom="%" onclick={write_shift_evt('%', '%')} />
-            <ShiftableKey top="+" bottom="+" onclick={write_shift_evt('+', '+')} />
-            <ShiftableKey top="-" bottom="-" onclick={write_shift_evt('-', '-')} />
-            <ShiftableKey top="*" bottom="*" onclick={write_shift_evt('*', '*')} />
-            <ShiftableKey top="/" bottom="/" onclick={write_shift_evt('/', '/')} />
-            <ShiftableKey top="<" bottom="<" onclick={write_shift_evt('<', '<')} />
-            <ShiftableKey top=">" bottom=">" onclick={write_shift_evt('>', '>')} />
-            <ShiftableKey top="=" bottom="=" onclick={write_shift_evt('=', '=')} />
-            <ShiftableKey top="'" bottom="'" onclick={write_shift_evt('\'', '\'')} />
+            <ShiftableKey top="+" bottom="'" onclick={write_shift_evt('+', '\'')} />
+            <ShiftableKey top="-" bottom="\"" onclick={write_shift_evt('-', '"')} />
+            <ShiftableKey top="*" bottom="(" onclick={write_shift_evt('*', '(')} />
+            <ShiftableKey top="/" bottom=")" onclick={write_shift_evt('/', ')')} />
+            <ShiftableKey top="<" bottom="{" onclick={write_shift_evt('<', '{')} />
+            <ShiftableKey top=">" bottom="}" onclick={write_shift_evt('>', '}')} />
+            <ShiftableKey top="!" bottom="," onclick={write_shift_evt('!', ',')} />
+            <ShiftableKey top="=" bottom="." onclick={write_shift_evt('=', '.')} />
+            <ShiftableKey top="%" bottom=":" onclick={write_shift_evt('%', ':')} />
+            <ShiftableKey top="?" bottom=";" onclick={write_shift_evt('?', ';')} />
 
             // Row
             <button onclick={write_evt('1')}>{"1"}</button>
@@ -182,8 +186,8 @@ pub fn app() -> Html {
             <button onclick={write_evt('n')}>{"n"}</button>
             <button onclick={write_evt('m')}>{"m"}</button>
             <button class="dark" onclick={write_evt(' ')}>{"spc"}</button>
-            <button class="dark" onclick={move_evt(MoveAction::Enter)}>{"ret"}</button>
-            <button class="dark">{"shift"}</button>
+            <button class="dark" onclick={move_evt(MoveAction::Enter)}>{"ent"}</button>
+            <button class="dark" onclick={move_evt(MoveAction::Shift)}>{"shift"}</button>
           </div>
         </div>
       </div>
