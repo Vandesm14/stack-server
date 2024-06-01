@@ -51,11 +51,11 @@ pub fn app() -> Html {
         context.set_font("24px monospace");
 
         let mut wrapping = false;
-        for char in editor.chars.iter() {
+        for char in editor.chars_window() {
           wrapping = char.wrapped;
 
           let x = char.line_index;
-          let y = char.line - editor.line_offset;
+          let y = char.line.saturating_sub(editor.line_offset);
 
           let mut x = x as f64;
           let y = y as f64;
@@ -89,8 +89,6 @@ pub fn app() -> Html {
 
   html! {
     <main>
-      <p>{editor.cursor}</p>
-      <p>{format!("{:?}", editor.buffer)}</p>
       <div id="device" class="col">
         <canvas id="buffer" width="231px" height="143px" ref={canvas_ref}></canvas>
         <div id="button-grid">
