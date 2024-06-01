@@ -21,7 +21,11 @@ impl Characters {
     Self { chars }
   }
 
-  pub fn from_string(string: &str, max_chars: usize) -> Self {
+  pub fn from_string(
+    string: &str,
+    max_chars: usize,
+    wrapped_max_chars: usize,
+  ) -> Self {
     let mut chars: Vec<Character> = Vec::new();
     let mut line = 0;
     let mut line_index = 0;
@@ -29,7 +33,11 @@ impl Characters {
 
     let mut count = 0;
     for char in string.chars() {
-      let local_max = if wrapping { max_chars + 1 } else { max_chars };
+      let local_max = if wrapping {
+        wrapped_max_chars
+      } else {
+        max_chars
+      };
 
       if char == '\n' {
         line_index = 0;
@@ -282,13 +290,12 @@ impl Editor {
     if self.mode == EditorMode::Edit {
       self.buffer = self.code.replace('\n', " \n");
       self.buffer.push(' ');
-      self.chars = Characters::from_string(&self.buffer, 15);
+      self.chars = Characters::from_string(&self.buffer, 15, 16);
 
       self.save_to_local_storage();
     } else if self.mode == EditorMode::Run {
-      self.buffer = self.code_result.replace('\n', " \n");
-      self.buffer.push(' ');
-      self.chars = Characters::from_string(&self.buffer, 15);
+      self.buffer.clone_from(&self.code_result);
+      self.chars = Characters::from_string(&self.buffer, 16, 16);
     }
   }
 

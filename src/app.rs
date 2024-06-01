@@ -82,7 +82,7 @@ pub fn app() -> Html {
             x += 1.0;
           }
 
-          if char.index == editor.cursor {
+          if char.index == editor.cursor && editor.mode != EditorMode::Run {
             context.fill_rect(x * x_tile, y * y_tile + 2.0, -2.0, y_tile + 2.0)
           }
 
