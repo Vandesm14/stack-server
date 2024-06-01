@@ -163,7 +163,7 @@ pub fn app() -> Html {
             <button onclick={write_evt('j')}>{"j"}</button>
             <button onclick={write_evt('k')}>{"k"}</button>
             <button onclick={write_evt('l')}>{"l"}</button>
-            <button class="dark" onclick={move_evt(MoveAction::Enter)}>{"ret"}</button>
+            <button class="dark" onclick={move_evt(MoveAction::Delete)}>{"del"}</button>
 
             // Row
             <button onclick={write_evt('z')}>{"z"}</button>
@@ -174,7 +174,7 @@ pub fn app() -> Html {
             <button onclick={write_evt('n')}>{"n"}</button>
             <button onclick={write_evt('m')}>{"m"}</button>
             <button class="dark" onclick={write_evt(' ')}>{"spc"}</button>
-            <button class="dark" onclick={move_evt(MoveAction::Delete)}>{"del"}</button>
+            <button class="dark" onclick={move_evt(MoveAction::Enter)}>{"ret"}</button>
             <button class="dark">{"shift"}</button>
           </div>
         </div>

@@ -1,3 +1,5 @@
+use stack_core::prelude::*;
+
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Character {
   pub char: char,
@@ -105,7 +107,9 @@ pub struct Editor {
   pub cursor: usize,
   pub line_offset: usize,
 
+  pub code_result: String,
   pub code: String,
+
   pub chars: Characters,
   pub buffer: String,
 
@@ -147,6 +151,12 @@ impl Editor {
     let current_line = current_char.map(|char| char.line).unwrap_or(0);
 
     match action {
+      MoveAction::Mode => self.set_mode(if self.mode == EditorMode::Edit {
+        EditorMode::Run
+      } else {
+        EditorMode::Edit
+      }),
+
       MoveAction::Left => self.set_cursor(SetCursor::Decrement, 1),
       MoveAction::Right => self.set_cursor(SetCursor::Increment, 1),
 
@@ -219,9 +229,55 @@ impl Editor {
   }
 
   pub fn refresh_chars(&mut self) {
-    self.buffer = self.code.replace('\n', " \n");
-    self.buffer.push(' ');
-    self.chars = Characters::from_string(&self.buffer, 15);
+    if self.mode == EditorMode::Edit {
+      self.buffer = self.code.replace('\n', " \n");
+      self.buffer.push(' ');
+      self.chars = Characters::from_string(&self.buffer, 15);
+    } else if self.mode == EditorMode::Run {
+      self.buffer = self.code_result.replace('\n', " \n");
+      self.buffer.push(' ');
+      self.chars = Characters::from_string(&self.buffer, 15);
+    }
+  }
+
+  pub fn set_mode(&mut self, mode: EditorMode) {
+    self.mode = mode;
+    if mode == EditorMode::Run {
+      let code = self.code.to_owned();
+      let source = Source::new("runner", code);
+      let mut lexer = Lexer::new(source);
+      let exprs = parse(&mut lexer).unwrap();
+
+      let engine = Engine::new();
+      let context = Context::new();
+
+      // engine.add_module(stack_std::str::module());
+      // engine.add_module(stack_std::fs::module(false));
+      // engine.add_module(stack_std::scope::module());
+
+      let result = engine.run(context, exprs);
+      match result {
+        Ok(context) => {
+          self.code_result = context.stack().iter().enumerate().fold(
+            String::new(),
+            |mut str, (i, expr)| {
+              if i == 0 {
+                str.push_str(&format!("{}", expr));
+              } else {
+                str.push_str(&format!(", {}", expr));
+              }
+
+              str
+            },
+          )
+        }
+        Err(err) => {
+          self.code_result = err.to_string();
+        }
+      }
+    }
+
+    self.refresh_chars();
   }
 
   pub fn chars_window(&self) -> std::iter::Skip<std::slice::Iter<Character>> {
