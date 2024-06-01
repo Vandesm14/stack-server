@@ -1,6 +1,5 @@
 use stack_core::prelude::*;
 use wasm_bindgen::JsValue;
-use web_sys::Storage;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Character {
@@ -143,7 +142,7 @@ impl Editor {
     self
   }
 
-  pub fn with_local_storage(mut self) -> Self {
+  pub fn with_local_storage(self) -> Self {
     let storage = web_sys::window().unwrap().local_storage().ok().flatten();
 
     if let Some(storage) = storage {
@@ -292,7 +291,7 @@ impl Editor {
       self.buffer.push(' ');
       self.chars = Characters::from_string(&self.buffer, 15, 16);
 
-      self.save_to_local_storage();
+      let _ = self.save_to_local_storage();
     } else if self.mode == EditorMode::Run {
       self.buffer.clone_from(&self.code_result);
       self.chars = Characters::from_string(&self.buffer, 16, 16);

@@ -60,10 +60,7 @@ pub fn app() -> Html {
         context.set_fill_style(&JsValue::from_str("white"));
         context.set_font("24px monospace");
 
-        let mut wrapping = false;
         for char in editor.chars_window() {
-          wrapping = char.wrapped;
-
           let x = char.line_index;
           let y = char.line.saturating_sub(editor.line_offset);
 
@@ -73,7 +70,7 @@ pub fn app() -> Html {
           let x_tile = 14.4;
           let y_tile = 20.1;
 
-          if !wrapping && editor.mode != EditorMode::Run {
+          if !char.wrapped && editor.mode != EditorMode::Run {
             if x == 0.0 {
               context
                 .fill_text(&':'.to_string(), x * x_tile, (y + 1.0) * y_tile)
